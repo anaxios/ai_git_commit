@@ -2,6 +2,8 @@
 
 clone this repo and then link the scripts into your path.
 
+requires: jq
+
 ### use
 Instead of 
 
