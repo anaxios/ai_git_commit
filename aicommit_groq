@@ -1,5 +1,11 @@
 #!/bin/bash
-pushd $(pwd) >/dev/null
+
+set -eu
+set -o pipefail
+
+ARGS=("${@-}")
+
+pushd $(pwd) >/dev/null || exit 1
 
 TMP_FILE="/tmp/aicommit"
 
@@ -40,4 +46,4 @@ fi
  
 git commit -e -m "$(cat ${TMP_FILE})" && rm ${TMP_FILE}
 
-popd >/dev/null
+popd >/dev/null || exit 1
