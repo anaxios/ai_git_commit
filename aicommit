@@ -29,18 +29,6 @@ hasFlag() {
 	echo 'false'
 }
 
-spin() {
-	echo "${@}"
-	while true; do
-		spinner=('-' '\' '|' '/')
-		for i in "${spinner[@]}"; do
-			echo -ne "\r${i}"
-			sleep .05
-		done
-	done
-	echo ""
-}
-
 if ! diff=$(git diff --cached); then
 	echo "Failed to get diff."
 	exit 1
@@ -56,18 +44,13 @@ message=$(
 # trunk-ignore(shellcheck/SC2091)
 # trunk-ignore(shellcheck/SC2310)
 if $(hasFlag -r --reset); then
-	spin "resetting AI history." &
-	SPINNER="$!"
+
 	if ! curl -s -X POST https://infer.x64.world/reset-conversation >/dev/null; then
 		echo "Failed to reset conversation."
-		kill ${SPINNER}
 		exit 1
 	fi
-	kill "${SPINNER}"
 fi
 
-spin "AI is thinking." &
-SPINNER="$!"
 curl -s "https://infer.x64.world/chat" \
 	-X POST \
 	-H "Content-Type: application/json" \
@@ -75,11 +58,9 @@ curl -s "https://infer.x64.world/chat" \
 
 # trunk-ignore(shellcheck/SC2181)
 if [[ 0 -ne $? ]]; then
-	kill "${SPINNER}"
 	echo "Failed to get response."
 	exit 1
 fi
-kill "${SPINNER}"
 
 git commit -e -m "$(cat "${TMP_FILE}")" && rm "${TMP_FILE}"
 
