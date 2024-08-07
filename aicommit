@@ -1,6 +1,5 @@
 #!/bin/bash
 set -eu
-set -o pipefail
 
 ARGS=("${@-}")
 
@@ -65,14 +64,14 @@ curl -s "https://infer.x64.world/chat" \
 	-X POST \
 	-H "Content-Type: application/json" \
 	-d "${message}" | jq -r '.content | gsub("\""; "")' >"${TMP_FILE}"
-kill "${SPINNER}"
 
 # trunk-ignore(shellcheck/SC2181)
 if [[ 0 -ne $? ]]; then
+	kill "${SPINNER}"
 	echo "Failed to get response."
 	exit 1
 fi
-
+kill "${SPINNER}"
 
 git commit -e -m "$(cat "${TMP_FILE}")" && rm "${TMP_FILE}"
 
