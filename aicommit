@@ -4,7 +4,7 @@ set -e
 ARGS=("${@-}")
 
 TMP_FILE="/tmp/aicommit"
-system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else."
+system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else. Give detail for every change in the diff."
 
 pushd "$(pwd)" >/dev/null
 
