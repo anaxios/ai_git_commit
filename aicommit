@@ -5,7 +5,7 @@ ARGS=("${@-}")
 
 TMP_FILE="/tmp/aicommit"
 system=$(
-cat - <<EOF
+	cat - <<EOF
 
 You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. 
 Only reply with the commit message and nothing else. 
