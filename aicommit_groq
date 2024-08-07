@@ -3,6 +3,11 @@ pushd $(pwd) "$@" >/dev/null
 
 TMP_FILE="/tmp/aicommit"
 
+if [[ -z "${GROQ_API_KEY}" ]]; then
+  echo "API key not set."
+  exit 1
+fi
+
 system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else."
 
 diff=$(git diff --cached)
