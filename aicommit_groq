@@ -29,7 +29,7 @@ fi
 
 message=$(
 	jq -n \
-		".messages = [{role: \"system\", content: $(jq -R -s '@json' <<<"$system")}, {role: \"user\", content: $(jq -R -s '@json' <<<"$diff")}] |
+		".messages = [{role: \"system\", content: $(jq -R -s '@json' <<<"${system}")}, {role: \"user\", content: $(jq -R -s '@json' <<<"${diff}")}] |
    .model = \"llama-3.1-70b-versatile\" |
    .temperature = 1 |
    .max_tokens = 1024 |
@@ -38,6 +38,7 @@ message=$(
    .stop = null"
 )
 
+# trunk-ignore(shellcheck/SC2312)
 curl -s "https://api.groq.com/openai/v1/chat/completions" \
 	-X POST \
 	-H "Content-Type: application/json" \
