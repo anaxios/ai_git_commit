@@ -35,7 +35,7 @@ message=$(
 		".message = $(jq -R -s '@json' <<<"${message_cat}")"
 )
 
-if hasFlag -r --reset; then
+if $(hasFlag -r --reset); then
 	curl -s -X POST https://infer.x64.world/reset-conversation "$@" >/dev/null
 	if ! curl -s -X POST https://infer.x64.world/reset-conversation "$@" >/dev/null; then
 		echo "Failed to reset conversation."
