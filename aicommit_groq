@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
 
 ARGS=("${@-}")
 TMP_FILE="/tmp/aicommit"
