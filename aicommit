@@ -1,39 +1,58 @@
 #!/bin/bash
+set -eu
+set -o pipefail
 
-pushd $(pwd) "$@" >/dev/null
+ARGS=("${@-}")
+
+pushd "$(pwd)" "$@" >/dev/null
 
 TMP_FILE="/tmp/aicommit"
 
+hasFlag() {
+	local flags=("$@")
+	for var in "${ARGS[@]}"; do
+		for flag in "${flags[@]}"; do
+			if [[ ${flag} == "${var}" ]]; then
+				echo 'true'
+				return
+			fi
+		done
+	done
+	echo 'false'
+}
+
 system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else."
 
-diff=$(git diff --cached)
-if [[ 0 -ne $? ]]; then 
-  echo "Failed to get diff."
-  exit 1
+if ! diff=$(git diff --cached); then
+	echo "Failed to get diff."
+	exit 1
 fi
 
-message_cat="$system diff: $diff"
+message_cat="${system} diff: ${diff}"
 
-message=$(jq -n \
-  ".message = $(jq -R -s '@json' <<< "$message_cat")"
+message=$(
+	jq -n \
+		".message = $(jq -R -s '@json' <<<"${message_cat}")"
 )
 
-curl -s -X POST https://infer.x64.world/reset-conversation "$@">/dev/null
-if [[ 0 -ne $? ]]; then 
-  echo "Failed to reset conversation."
-  exit 1
+if hasFlag -r --reset; then
+	curl -s -X POST https://infer.x64.world/reset-conversation "$@" >/dev/null
+	if ! curl -s -X POST https://infer.x64.world/reset-conversation "$@" >/dev/null; then
+		echo "Failed to reset conversation."
+		exit 1
+	fi
 fi
 
 curl -s "https://infer.x64.world/chat" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d "$message" | jq -r '.content | gsub("\""; "")' > ${TMP_FILE}
+	-X POST \
+	-H "Content-Type: application/json" \
+	-d "${message}" | jq -r '.content | gsub("\""; "")' >"${TMP_FILE}"
 
-if [[ 0 -ne $? ]]; then 
-  echo "Failed to get response."
-  exit 1
+if [[ 0 -ne $? ]]; then
+	echo "Failed to get response."
+	exit 1
 fi
 
-git commit -e -m "$(cat ${TMP_FILE})" && rm ${TMP_FILE}
+git commit -e -m "$(cat "${TMP_FILE}")" && rm "${TMP_FILE}"
 
 popd "$@" >/dev/null
