@@ -44,7 +44,6 @@ message=$(
 # trunk-ignore(shellcheck/SC2091)
 # trunk-ignore(shellcheck/SC2310)
 if $(hasFlag -r --reset); then
-
 	if ! curl -s -X POST https://infer.x64.world/reset-conversation >/dev/null; then
 		echo "Failed to reset conversation."
 		exit 1
