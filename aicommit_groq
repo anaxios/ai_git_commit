@@ -4,10 +4,21 @@ set -eu
 set -o pipefail
 
 ARGS=("${@-}")
+TMP_FILE="/tmp/aicommit"
 
 pushd "$(pwd)" >/dev/null || exit 1
 
-TMP_FILE="/tmp/aicommit"
+spin() {
+	echo "${@}"
+	while true; do
+		spinner=('-' '\' '|' '/')
+		for i in "${spinner[@]}"; do
+			echo -ne "\r${i}"
+			sleep .05
+		done
+	done
+	echo ""
+}
 
 if [[ -z ${GROQ_API_KEY} ]]; then
 	echo "API key not set."
@@ -31,7 +42,8 @@ message=$(
    .stream = false |
    .stop = null"
 )
-
+spin "AI is thinking..." &
+SPINNER="$!"
 curl -s "https://api.groq.com/openai/v1/chat/completions" \
 	-X POST \
 	-H "Content-Type: application/json" \
@@ -40,8 +52,10 @@ curl -s "https://api.groq.com/openai/v1/chat/completions" \
 
 if [[ 0 -ne $? ]]; then
 	echo "Failed to get response."
+	kill "${SPINNER}"
 	exit 1
 fi
+kill "${SPINNER}"
 
 git commit -e -m "$(cat ${TMP_FILE})" && rm ${TMP_FILE}
 
