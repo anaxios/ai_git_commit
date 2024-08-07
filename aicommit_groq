@@ -5,6 +5,17 @@ set -e
 ARGS=("${@-}")
 TMP_FILE="/tmp/aicommit"
 
+
+system=$(
+cat - <<EOF
+
+You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. 
+Only reply with the commit message and nothing else. 
+Give detail for every change in the diff.
+
+EOF
+)
+
 pushd "$(pwd)" >/dev/null || exit 1
 
 spin() {
@@ -24,7 +35,6 @@ if [[ -z ${GROQ_API_KEY} ]]; then
 	exit 1
 fi
 
-system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else."
 
 if ! diff=$(git diff --cached); then
 	echo "Failed to get diff."
