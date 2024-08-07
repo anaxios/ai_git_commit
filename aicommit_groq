@@ -5,26 +5,25 @@ set -o pipefail
 
 ARGS=("${@-}")
 
-pushd $(pwd) >/dev/null || exit 1
+pushd "$(pwd)" >/dev/null || exit 1
 
 TMP_FILE="/tmp/aicommit"
 
-
-if [[ -z "${GROQ_API_KEY}" ]]; then
-  echo "API key not set."
-  exit 1
+if [[ -z ${GROQ_API_KEY} ]]; then
+	echo "API key not set."
+	exit 1
 fi
 
 system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else."
 
-diff=$(git diff --cached)
-if [[ 0 -ne $? ]]; then 
-  echo "Failed to get diff."
-  exit 1
+if ! diff=$(git diff --cached); then
+	echo "Failed to get diff."
+	exit 1
 fi
 
-message=$(jq -n \
-  ".messages = [{role: \"system\", content: $(jq -R -s '@json' <<< "$system")}, {role: \"user\", content: $(jq -R -s '@json' <<< "$diff")}] |
+message=$(
+	jq -n \
+		".messages = [{role: \"system\", content: $(jq -R -s '@json' <<<"$system")}, {role: \"user\", content: $(jq -R -s '@json' <<<"$diff")}] |
    .model = \"llama-3.1-70b-versatile\" |
    .temperature = 1 |
    .max_tokens = 1024 |
@@ -34,16 +33,16 @@ message=$(jq -n \
 )
 
 curl -s "https://api.groq.com/openai/v1/chat/completions" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${GROQ_API_KEY}" \
-  -d "$message" | jq -r '.choices[0].message.content | gsub("\""; "")' > ${TMP_FILE}
-if [[ 0 -ne $? ]]; then 
-  echo "Failed to get response."
-  exit 1
+	-X POST \
+	-H "Content-Type: application/json" \
+	-H "Authorization: Bearer ${GROQ_API_KEY}" \
+	-d "${message}" | jq -r '.choices[0].message.content | gsub("\""; "")' >"${TMP_FILE}"
+
+if [[ 0 -ne $? ]]; then
+	echo "Failed to get response."
+	exit 1
 fi
-  
- 
+
 git commit -e -m "$(cat ${TMP_FILE})" && rm ${TMP_FILE}
 
 popd >/dev/null || exit 1
