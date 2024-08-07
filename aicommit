@@ -4,9 +4,10 @@ set -o pipefail
 
 ARGS=("${@-}")
 
-pushd "$(pwd)" >/dev/null
-
 TMP_FILE="/tmp/aicommit"
+system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else."
+
+pushd "$(pwd)" >/dev/null
 
 hasFlag() {
 	local flags=("$@")
@@ -21,7 +22,17 @@ hasFlag() {
 	echo 'false'
 }
 
-system="You are an expert programmer that values clear, unambiguous communication and are specialized in generating concise and informative git commit messages. Only reply with the commit message and nothing else."
+spin() {
+	echo "${@}"
+	while true; do
+		spinner=('-' '\' '|' '/')
+		for i in "${spinner[@]}"; do
+			echo -ne "\r${i}"
+			sleep .05
+		done
+	done
+	echo ""
+}
 
 if ! diff=$(git diff --cached); then
 	echo "Failed to get diff."
@@ -38,11 +49,14 @@ message=$(
 # trunk-ignore(shellcheck/SC2091)
 # trunk-ignore(shellcheck/SC2310)
 if $(hasFlag -r --reset); then
-	echo "resetting AI history."
+	spin "resetting AI history." &
+	SPINNER="$!"
 	if ! curl -s -X POST https://infer.x64.world/reset-conversation >/dev/null; then
 		echo "Failed to reset conversation."
+		kill ${SPINNER}
 		exit 1
 	fi
+	kill "${SPINNER}"
 fi
 
 curl -s "https://infer.x64.world/chat" \
